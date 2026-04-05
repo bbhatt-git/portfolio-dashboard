@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Portfolio Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+/* ════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — macOS Sonoma / Apple HIG
+════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Canvas layers */
+  --c0: #f2f2f7;          /* window background  */
+  --c1: #ffffff;          /* surface / card      */
+  --c2: rgba(255,255,255,0.78); /* sidebar glass  */
+  --c3: rgba(0,0,0,0.035);     /* inset / alt     */
+  --c4: rgba(0,0,0,0.055);     /* hover           */
+
+  /* Separators */
+  --s1: rgba(60,60,67,0.13);
+  --s2: rgba(60,60,67,0.07);
+
+  /* Ink scale */
+  --t1: #1d1d1f;
+  --t2: #3a3a3c;
+  --t3: #6e6e73;
+  --t4: #aeaeb2;
+  --t5: #d1d1d6;
+
+  /* System palette */
+  --blue:   #0071e3;
+  --blue-h: #0077ed;
+  --blue-g: rgba(0,113,227,0.11);
+  --blue-d: rgba(0,113,227,0.18);
+  --red:    #ff3b30;
+  --red-g:  rgba(255,59,48,0.09);
+  --green:  #30d158;
+  --grn-g:  rgba(48,209,88,0.11);
+  --orng:   #ff9f0a;
+  --org-g:  rgba(255,159,10,0.11);
+  --purp:   #bf5af2;
+  --prp-g:  rgba(191,90,242,0.11);
+  --teal:   #32ade6;
+  --tel-g:  rgba(50,173,230,0.11);
+
+  /* Layout */
+  --sw: 240px;    /* sidebar width */
+  --th: 64px;     /* topbar height */
+
+  /* Radii */
+  --r1: 5px; --r2: 9px; --r3: 12px; --r4: 16px; --r5: 20px; --r6: 24px;
+
+  /* Elevation */
+  --e1: 0 1px 2px rgba(0,0,0,0.05);
+  --e2: 0 2px 8px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --e3: 0 4px 16px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04);
+  --e4: 0 12px 40px rgba(0,0,0,0.10),0 3px 8px rgba(0,0,0,0.05);
+  --e5: 0 28px 80px rgba(0,0,0,0.15),0 8px 24px rgba(0,0,0,0.07);
+  --eb: 0 4px 18px rgba(0,113,227,0.32);
+
+  /* Motion */
+  --sp: cubic-bezier(0.16,1,0.3,1);
+  --ez: cubic-bezier(0.2,0,0,1);
+  --ef: cubic-bezier(0.4,0,1,1);
+  --fast: 130ms; --mid: 220ms; --slow: 360ms;
+
+  --font: -apple-system,"SF Pro Display","SF Pro Text",BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono: "SF Mono","JetBrains Mono","Fira Code",Menlo,monospace;
+}
+
+/* ── Dark mode ────────────────────────────────────────── */
+@media(prefers-color-scheme:dark){:root{
+  --c0:#0d0d0f; --c1:#1c1c1e; --c2:rgba(28,28,30,0.85);
+  --c3:rgba(255,255,255,0.04); --c4:rgba(255,255,255,0.08);
+  --s1:rgba(255,255,255,0.11); --s2:rgba(255,255,255,0.055);
+  --t1:#f5f5f7; --t2:#d1d1d6; --t3:#8e8e93; --t4:#48484a; --t5:#2c2c2e;
+  --blue:#0a84ff; --blue-h:#409cff; --blue-g:rgba(10,132,255,0.16);
+  --red-g:rgba(255,69,58,0.14); --grn-g:rgba(48,209,88,0.14);
+  --org-g:rgba(255,159,10,0.14); --prp-g:rgba(191,90,242,0.14);
+}}
+
+/* ── Base ─────────────────────────────────────────────── */
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{font-family:var(--font);background:var(--c0);color:var(--t1);height:100vh;display:flex;overflow:hidden;font-size:14px;line-height:1.5}
+::selection{background:var(--blue-g)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--t5);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--t4)}
+
+/* ════════════════════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════════════════════ */
+.sidebar{
+  width:var(--sw);flex-shrink:0;height:100vh;
+  background:var(--c2);
+  backdrop-filter:saturate(200%) blur(56px);
+  -webkit-backdrop-filter:saturate(200%) blur(56px);
+  border-right:1px solid var(--s1);
+  display:flex;flex-direction:column;z-index:200;overflow:hidden;
+}
+
+/* Traffic lights */
+.sb-chrome{
+  height:52px;display:flex;align-items:center;
+  padding:0 18px;gap:8px;flex-shrink:0;
+  border-bottom:1px solid var(--s2);
+}
+.tl{width:12px;height:12px;border-radius:50%;flex-shrink:0;cursor:default;transition:filter var(--fast)}
+.tl:hover{filter:brightness(0.80) saturate(1.2)}
+.tl-r{background:#fe5f57;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.16)}
+.tl-y{background:#febc2e;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.12)}
+.tl-g{background:#28c840;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.12)}
+.sb-win-title{margin-left:auto;font-size:11.5px;font-weight:500;color:var(--t4);letter-spacing:-.1px}
+
+/* Brand */
+.sb-brand{display:flex;align-items:center;gap:11px;padding:15px 15px 11px}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(148deg,#0071e3 0%,#0048b3 100%);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 10px rgba(0,72,179,0.38),inset 0 1px 0 rgba(255,255,255,0.22);
+}
+.brand-mark i{color:#fff;font-size:13px}
+.brand-name{font-size:13.5px;font-weight:650;color:var(--t1);letter-spacing:-.3px}
+
+/* Nav */
+.sb-nav{flex:1;padding:4px 9px;overflow-y:auto;overflow-x:hidden}
+.nav-grp{margin-bottom:2px}
+.nav-grp-lbl{
+  font-size:10.5px;font-weight:700;color:var(--t4);
+  padding:12px 8px 4px;letter-spacing:.04em;text-transform:uppercase
+}
+.nav-item{
+  display:flex;align-items:center;gap:9px;padding:6px 8px;
+  border-radius:var(--r2);cursor:pointer;font-size:13px;font-weight:500;
+  color:var(--t2);transition:background var(--fast) var(--ez),color var(--fast) var(--ez);
+  user-select:none;position:relative;margin-bottom:1px
+}
+.nav-item:hover{background:var(--c4);color:var(--t1)}
+.nav-item.active{background:var(--blue-g);color:var(--blue)}
+.nav-item.active .nav-ic{background:rgba(0,113,227,0.16);color:var(--blue)}
+.nav-ic{
+  width:28px;height:28px;border-radius:7px;background:var(--c3);color:var(--t3);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:13px;transition:all var(--fast) var(--ez)
+}
+.nav-item:hover .nav-ic{background:var(--c4);color:var(--t2)}
+#unread-badge{
+  margin-left:auto;min-width:18px;height:18px;background:var(--red);color:#fff;
+  font-size:10px;font-weight:700;border-radius:9px;
+  display:none;align-items:center;justify-content:center;padding:0 5px
+}
+
+/* Footer */
+.sb-foot{padding:12px 15px;border-top:1px solid var(--s2);flex-shrink:0}
+.env-status{display:flex;align-items:center;gap:7px}
+.env-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;
+  box-shadow:0 0 0 2.5px rgba(48,209,88,0.24);transition:all var(--mid) var(--ez)
+}
+.env-dot.error{background:var(--red);box-shadow:0 0 0 2.5px rgba(255,59,48,0.24)}
+.env-status span{font-size:11.5px;font-weight:500;color:var(--t3)}
+
+/* ════════════════════════════════════════════════════════
+   MAIN LAYOUT
+════════════════════════════════════════════════════════ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+.topbar{
+  height:var(--th);padding:0 32px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(242,242,247,0.92);
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border-bottom:1px solid var(--s1);z-index:100;position:sticky;top:0
+}
+@media(prefers-color-scheme:dark){.topbar{background:rgba(13,13,15,0.92)}}
+.tb-title{font-size:18px;font-weight:700;letter-spacing:-.5px;color:var(--t1);line-height:1.2}
+.tb-sub{font-size:12px;color:var(--t3);margin-top:2px}
+
+.scroll{flex:1;overflow-y:auto;padding:28px 32px 72px}
+.page{display:none}
+.page.active{display:block;animation:pgIn var(--slow) var(--sp) both}
+@keyframes pgIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* ════════════════════════════════════════════════════════
+   CARD SYSTEM
+════════════════════════════════════════════════════════ */
+.card{
+  background:var(--c1);border:1px solid var(--s1);
+  border-radius:var(--r5);box-shadow:var(--e2);overflow:hidden
+}
+.card-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 22px;border-bottom:1px solid var(--s2)
+}
+.card-title{font-size:14px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+
+/* Section cards for form */
+.scard{background:var(--c1);border:1px solid var(--s1);border-radius:var(--r5);box-shadow:var(--e2);overflow:hidden;margin-bottom:16px}
+.scard-hd{display:flex;align-items:center;gap:10px;padding:14px 22px;border-bottom:1px solid var(--s2);background:var(--c3)}
+.scard-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px}
+.scard-hd span{font-size:13px;font-weight:650;color:var(--t1);letter-spacing:-.2px}
+.scard-bd{padding:22px}
+
+/* ════════════════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════════════════ */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stat-card{
+  background:var(--c1);border:1px solid var(--s1);border-radius:var(--r5);box-shadow:var(--e2);
+  padding:18px 20px;display:flex;align-items:center;gap:14px;
+  transition:box-shadow var(--mid) var(--ez),transform var(--mid) var(--sp)
+}
+.stat-card:hover{box-shadow:var(--e3);transform:translateY(-1.5px)}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.stat-num{font-size:28px;font-weight:700;letter-spacing:-1px;color:var(--t1);line-height:1}
+.stat-label{font-size:12px;color:var(--t3);font-weight:500;margin-top:3px}
+
+/* ════════════════════════════════════════════════════════
+   FORM CONTROLS
+════════════════════════════════════════════════════════ */
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-field.span-2{grid-column:span 2}
+.form-field label{font-size:12px;font-weight:600;color:var(--t2);letter-spacing:-.1px}
+.required{color:var(--red);margin-left:2px}
+.field-hint{font-size:11.5px;color:var(--t3);margin-top:3px;line-height:1.45}
+
+input[type=text]:not(.tags-input),
+input[type=number],input[type=url],input[type=password],textarea{
+  width:100%;padding:9px 13px;background:var(--c0);border:1px solid var(--s1);
+  border-radius:var(--r2);font-size:13.5px;font-family:var(--font);color:var(--t1);
+  outline:none;line-height:1.5;-webkit-appearance:none;appearance:none;
+  transition:border-color var(--fast) var(--ez),box-shadow var(--fast) var(--ez),background var(--fast) var(--ez)
+}
+input::placeholder,textarea::placeholder{color:var(--t4)}
+input:hover:not(:focus),textarea:hover:not(:focus){border-color:var(--t5)}
+input:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3.5px var(--blue-g);background:var(--c1)}
+textarea{resize:vertical;min-height:106px;line-height:1.65}
+
+/* ════════════════════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:7px;padding:9px 18px;border:none;border-radius:var(--r2);
+  font-size:13.5px;font-weight:590;font-family:var(--font);cursor:pointer;
+  user-select:none;white-space:nowrap;letter-spacing:-.1px;text-decoration:none;
+  transition:all var(--fast) var(--ez);-webkit-appearance:none
+}
+.btn:active{transform:scale(.963)}
+.btn:disabled{opacity:.44;cursor:not-allowed;transform:none}
+.btn i{font-size:13px}
+.btn-primary{
+  background:var(--blue);color:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.18),0 2px 10px rgba(0,113,227,.22)
+}
+.btn-primary:hover:not(:disabled){background:var(--blue-h);box-shadow:var(--eb)}
+.btn-secondary{background:var(--c1);color:var(--t2);border:1px solid var(--s1);box-shadow:var(--e1)}
+.btn-secondary:hover:not(:disabled){background:var(--c4);color:var(--t1)}
+.btn-danger{background:var(--red-g);color:var(--red);border:1px solid rgba(255,59,48,.17)}
+.btn-danger:hover:not(:disabled){background:rgba(255,59,48,.17)}
+.btn-ghost{background:transparent;color:var(--t3);padding:7px 12px}
+.btn-ghost:hover:not(:disabled){background:var(--c3);color:var(--t1)}
+.btn-sm{padding:6px 13px;font-size:12.5px;border-radius:var(--r1)}
+.btn-sm i{font-size:11px}
+.btn-icon{
+  width:30px;height:30px;border-radius:var(--r1);border:none;background:transparent;
+  color:var(--t3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:all var(--fast) var(--ez);font-size:13px;flex-shrink:0
+}
+.btn-icon:hover{background:var(--c4);color:var(--t1)}
+.btn-icon.danger:hover{background:var(--red-g);color:var(--red)}
+.form-actions-bar{
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+  padding:20px 0 4px;border-top:1px solid var(--s2);margin-top:8px
+}
+
+/* ════════════════════════════════════════════════════════
+   SETTINGS ROWS  (macOS System Preferences feel)
+════════════════════════════════════════════════════════ */
+.settings-group{background:var(--c1);border:1px solid var(--s1);border-radius:var(--r5);overflow:hidden;margin-bottom:16px;box-shadow:var(--e2)}
+.settings-group-header{
+  display:flex;align-items:center;gap:9px;padding:12px 22px 10px;
+  font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;
+  letter-spacing:.06em;background:var(--c3);border-bottom:1px solid var(--s2)
+}
+.settings-group-header i{font-size:14px;color:var(--t3)}
+.settings-row{
+  display:flex;align-items:center;padding:12px 22px;border-bottom:1px solid var(--s2);
+  gap:16px;transition:background var(--fast) var(--ez)
+}
+.settings-row:last-child{border-bottom:none}
+.settings-row:hover{background:var(--c4)}
+.settings-label{flex:0 0 196px;font-size:13px;font-weight:500;color:var(--t2)}
+.settings-content{flex:1;display:flex;align-items:center;gap:10px}
+.settings-row input{
+  background:var(--c0);border:1px solid var(--s1);border-radius:var(--r1);
+  padding:7px 12px;font-size:13px;height:34px;flex:1
+}
+
+/* ════════════════════════════════════════════════════════
+   TAGS INPUT
+════════════════════════════════════════════════════════ */
+.tags-container{
+  min-height:42px;padding:5px 7px;background:var(--c0);border:1px solid var(--s1);
+  border-radius:var(--r2);display:flex;flex-wrap:wrap;align-items:center;gap:5px;
+  cursor:text;transition:border-color var(--fast) var(--ez),box-shadow var(--fast) var(--ez)
+}
+.tags-container:focus-within{border-color:var(--blue);box-shadow:0 0 0 3.5px var(--blue-g);background:var(--c1)}
+.tag{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 9px 3px 10px;
+  background:var(--blue-g);color:var(--blue);border-radius:5px;font-size:12.5px;font-weight:550
+}
+.tag button{
+  background:none;border:none;cursor:pointer;color:var(--blue);opacity:.55;
+  font-size:15px;padding:0;line-height:1;display:flex;align-items:center;margin-top:-1px;
+  transition:opacity var(--fast)
+}
+.tag button:hover{opacity:1}
+.tags-input{
+  border:none!important;outline:none!important;box-shadow:none!important;
+  background:transparent!important;padding:3px 6px!important;flex:1;min-width:120px;
+  font-size:13.5px;font-family:var(--font);color:var(--t1);min-height:unset!important
+}
+.tags-input::placeholder{color:var(--t4)}
+
+/* ════════════════════════════════════════════════════════
+   FEATURES LIST
+════════════════════════════════════════════════════════ */
+.features-list{display:flex;flex-direction:column;gap:7px}
+.feature-item{
+  display:flex;align-items:center;gap:8px;background:var(--c0);
+  border:1px solid var(--s1);border-radius:var(--r2);padding:3px 6px 3px 12px;
+  transition:border-color var(--fast),box-shadow var(--fast)
+}
+.feature-item:focus-within{border-color:var(--blue);box-shadow:0 0 0 3.5px var(--blue-g)}
+.feature-item input{
+  flex:1;border:none!important;outline:none!important;box-shadow:none!important;
+  background:transparent!important;padding:6px 0!important;font-size:13.5px;
+  color:var(--t1);border-radius:0!important
+}
+.feature-item input::placeholder{color:var(--t4)}
+.btn-add-item{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--blue);
+  font-weight:560;cursor:pointer;background:none;border:none;font-family:var(--font);
+  padding:6px 2px;margin-top:6px;opacity:.85;transition:opacity var(--fast)
+}
+.btn-add-item:hover{opacity:1}
+
+/* ════════════════════════════════════════════════════════
+   IMAGE DROP ZONE
+════════════════════════════════════════════════════════ */
+.drop-zone{
+  position:relative;border:1.5px dashed var(--s1);border-radius:var(--r4);
+  padding:40px 24px;text-align:center;cursor:pointer;background:var(--c3);
+  transition:all var(--mid) var(--sp);overflow:hidden
+}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:var(--blue-g)}
+.dz-icon{
+  width:48px;height:48px;background:var(--c1);border:1px solid var(--s1);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
+  color:var(--t3);font-size:20px;box-shadow:var(--e2)
+}
+.dz-title{font-size:14px;font-weight:590;color:var(--t2);margin-bottom:4px}
+.dz-hint{font-size:12px;color:var(--t3)}
+.image-previews{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:14px}
+.preview-item{
+  position:relative;aspect-ratio:1;border-radius:var(--r2);overflow:hidden;
+  border:1px solid var(--s1);background:var(--c0);box-shadow:var(--e1)
+}
+.preview-item img{width:100%;height:100%;object-fit:cover;display:block}
+.remove-img{
+  position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;
+  background:rgba(0,0,0,.52);border:none;cursor:pointer;color:#fff;
+  display:flex;align-items:center;justify-content:center;opacity:0;
+  transition:opacity var(--fast);backdrop-filter:blur(4px);font-size:10px
+}
+.preview-item:hover .remove-img{opacity:1}
+.img-status{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:#fff;border-radius:var(--r2)
+}
+.img-status.success{background:rgba(48,209,88,0.66)}
+.img-status.error{background:rgba(255,59,48,0.66)}
+.upload-progress{display:none;margin-top:14px}
+.progress-bar-track{height:3px;background:var(--s1);border-radius:2px;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .3s var(--ez)}
+.progress-label{font-size:11.5px;color:var(--t3);margin-top:6px}
+
+/* ════════════════════════════════════════════════════════
+   CATEGORY DROPDOWN
+════════════════════════════════════════════════════════ */
+.custom-dropdown{
+  position:relative;padding:9px 13px;background:var(--c0);border:1px solid var(--s1);
+  border-radius:var(--r2);cursor:pointer;display:flex;align-items:center;
+  justify-content:space-between;font-size:13.5px;min-height:40px;
+  transition:all var(--fast) var(--ez)
+}
+.custom-dropdown:hover{border-color:var(--t5)}
+.custom-dropdown.open{border-color:var(--blue);box-shadow:0 0 0 3.5px var(--blue-g);background:var(--c1)}
+.dropdown-trigger{flex:1;color:var(--t1)}
+.dropdown-trigger.placeholder{color:var(--t4)}
+.dropdown-arrow{font-size:11px;color:var(--t4);flex-shrink:0;transition:transform var(--fast) var(--ez)}
+.custom-dropdown.open .dropdown-arrow{transform:rotate(180deg)}
+.category-dropdown-container{position:relative}
+.category-dropdown-menu{
+  position:absolute;top:6px;left:0;right:0;z-index:600;
+  background:rgba(255,255,255,0.96);
+  backdrop-filter:blur(36px) saturate(180%);
+  -webkit-backdrop-filter:blur(36px) saturate(180%);
+  border:1px solid var(--s1);border-radius:var(--r4);box-shadow:var(--e5);
+  padding:6px;animation:dropIn var(--mid) var(--sp)
+}
+@media(prefers-color-scheme:dark){.category-dropdown-menu{background:rgba(36,36,38,.97)}}
+@keyframes dropIn{from{opacity:0;transform:translateY(-5px) scale(.97)}to{opacity:1;transform:none}}
+.category-list{display:flex;flex-direction:column;gap:1px}
+.category-item{
+  display:flex;align-items:center;justify-content:space-between;padding:7px 10px;
+  border-radius:var(--r1);cursor:pointer;font-size:13px;color:var(--t2);
+  transition:all var(--fast) var(--ez);gap:8px
+}
+.category-item:hover{background:var(--blue-g);color:var(--blue)}
+.category-item.selected{background:var(--blue);color:#fff}
+.category-item i{font-size:11px;opacity:0}
+.category-item.selected i{opacity:1;color:#fff}
+.add-category-section{border-top:1px solid var(--s2);margin-top:5px;padding-top:5px}
+.add-category-input{display:flex;gap:6px}
+.add-category-input input{flex:1;font-size:12.5px;padding:6px 10px;height:32px}
+.add-category-input .btn{height:32px;padding:0 12px;font-size:12px}
+
+/* ════════════════════════════════════════════════════════
+   EMPTY STATES
+════════════════════════════════════════════════════════ */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center}
+.empty-state-icon{
+  width:58px;height:58px;background:var(--c3);border:1px solid var(--s1);
+  border-radius:16px;display:flex;align-items:center;justify-content:center;
+  color:var(--t4);font-size:24px;margin-bottom:16px;box-shadow:var(--e1)
+}
+.empty-state-title{font-size:16px;font-weight:650;color:var(--t1);margin-bottom:5px;letter-spacing:-.3px}
+.empty-state-desc{font-size:13px;color:var(--t3);max-width:300px;line-height:1.6}
+
+/* ════════════════════════════════════════════════════════
+   PROJECT CARDS
+════════════════════════════════════════════════════════ */
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(296px,1fr));gap:16px}
+.project-card{
+  background:var(--c1);border:1px solid var(--s1);border-radius:var(--r5);
+  overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--e2);
+  transition:box-shadow var(--mid) var(--ez),transform var(--mid) var(--sp),border-color var(--mid) var(--ez)
+}
+.project-card:hover{box-shadow:var(--e4);transform:translateY(-3px);border-color:transparent}
+.project-card-img{
+  aspect-ratio:16/9;background:var(--c0);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;position:relative
+}
+.project-card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 400ms var(--sp)}
+.project-card:hover .project-card-img img{transform:scale(1.035)}
+.project-card-body{padding:15px 18px;flex:1;display:flex;flex-direction:column}
+.project-card-title{font-size:14.5px;font-weight:650;color:var(--t1);letter-spacing:-.3px;margin-bottom:5px;line-height:1.3}
+.project-card-desc{
+  font-size:12.5px;color:var(--t3);line-height:1.6;flex:1;margin-bottom:12px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+.project-card-actions{display:flex;align-items:center;justify-content:space-between;padding-top:11px;border-top:1px solid var(--s2)}
+.chip{
+  display:inline-flex;align-items:center;padding:3px 9px;
+  background:var(--c3);border:1px solid var(--s2);
+  border-radius:5px;font-size:11.5px;font-weight:550;color:var(--t3);white-space:nowrap
+}
+.chip.category{background:var(--blue-g);color:var(--blue);border-color:transparent}
+
+/* ════════════════════════════════════════════════════════
+   TOOLBAR
+════════════════════════════════════════════════════════ */
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px}
+.search-box{position:relative;width:280px}
+.search-box i{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--t4);pointer-events:none}
+.search-box input{padding-left:36px;height:36px;padding-top:0;padding-bottom:0}
+
+/* ════════════════════════════════════════════════════════
+   TABLE
+════════════════════════════════════════════════════════ */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--s1)}
+th{
+  padding:11px 18px;text-align:left;font-size:11px;font-weight:700;
+  color:var(--t3);text-transform:uppercase;letter-spacing:.06em;
+  background:var(--c3);white-space:nowrap
+}
+tbody tr{border-bottom:1px solid var(--s2);transition:background var(--fast) var(--ez)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--c4)}
+td{padding:13px 18px;font-size:13px;color:var(--t2);vertical-align:middle}
+.td-name{font-weight:600;color:var(--t1)}
+.td-email a{color:var(--blue);text-decoration:none;font-size:12.5px}
+.td-email a:hover{text-decoration:underline}
+.td-msg{max-width:280px;color:var(--t3);font-size:12.5px;line-height:1.5;cursor:pointer}
+.td-date{white-space:nowrap;color:var(--t4);font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
+.badge.read{background:var(--grn-g);color:var(--green)}
+.badge.unread{background:var(--org-g);color:var(--orng)}
+
+/* ════════════════════════════════════════════════════════
+   SPINNER
+════════════════════════════════════════════════════════ */
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:inline-flex;flex-shrink:0}
+.spinner.dark{border-color:var(--s1);border-top-color:var(--t3)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ════════════════════════════════════════════════════════
+   MODALS
+════════════════════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.38);
+  backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);
+  z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;
+  animation:ovIn .18s var(--ez)
+}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--c1);border-radius:var(--r5);
+  box-shadow:0 32px 96px rgba(0,0,0,.24),0 8px 28px rgba(0,0,0,.10);
+  width:100%;max-width:452px;overflow:hidden;border:1px solid var(--s1);
+  animation:shUp .26s var(--sp)
+}
+.modal.wide{max-width:596px}
+@keyframes shUp{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--s2);display:flex;align-items:flex-start;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:700;letter-spacing:-.4px;color:var(--t1)}
+.modal-body{padding:18px 22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--s2);display:flex;justify-content:flex-end;gap:8px}
+.msg-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--s2);margin-bottom:14px}
+.mm-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t4);margin-bottom:3px}
+.mm-val{font-size:13px;color:var(--t1);font-weight:500}
+.mm-val a{color:var(--blue);text-decoration:none;font-size:12.5px}
+.msg-body-text{font-size:14px;line-height:1.72;color:var(--t2);white-space:pre-wrap;word-break:break-word}
+
+/* ════════════════════════════════════════════════════════
+   TOASTS
+════════════════════════════════════════════════════════ */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;
+  background:rgba(26,26,28,.95);
+  backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+  color:#fff;border-radius:var(--r4);font-size:13.5px;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,.24),0 2px 8px rgba(0,0,0,.14);
+  min-width:220px;max-width:340px;letter-spacing:-.1px;
+  border:1px solid rgba(255,255,255,.08);pointer-events:all;
+  animation:tIn .30s var(--sp) both
+}
+.toast i{font-size:17px;flex-shrink:0}
+.toast.success i{color:var(--green)}
+.toast.error   i{color:var(--red)}
+.toast.default i{color:var(--blue)}
+@keyframes tIn {from{opacity:0;transform:translateX(16px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(10px) scale(.95)}}
+
+/* ════════════════════════════════════════════════════════
+   SQL BLOCK
+════════════════════════════════════════════════════════ */
+.sql-block{
+  background:#14141a;border-radius:var(--r4);overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);position:relative;cursor:pointer
+}
+.sql-block:hover{border-color:rgba(255,255,255,.11)}
+#sql-code{
+  display:block;background:transparent;padding:20px 22px;font-size:12px;
+  line-height:1.72;color:#c9d1d9;font-family:var(--mono);overflow-x:auto;
+  margin:0;white-space:pre;cursor:pointer
+}
+.sql-copy-hint{
+  position:absolute;right:14px;top:13px;font-family:var(--font);font-size:11px;
+  color:#555;background:rgba(255,255,255,.07);padding:3px 10px;
+  border-radius:5px;border:1px solid rgba(255,255,255,.08)
+}
+
+/* ════════════════════════════════════════════════════════
+   CONFIG BANNER
+════════════════════════════════════════════════════════ */
+#config-banner{
+  background:rgba(255,149,0,.10);border:1px solid rgba(255,149,0,.22);
+  border-radius:var(--r4);padding:14px 18px;margin-bottom:20px;
+  display:flex;gap:12px;align-items:flex-start
+}
+#config-banner i{color:var(--orng);flex-shrink:0;font-size:18px;margin-top:1px}
+#config-banner p{font-size:13.5px;color:var(--t2);line-height:1.55}
+#config-banner strong{display:block;color:var(--t1);margin-bottom:2px;font-weight:650}
+#config-banner a{color:var(--blue);font-weight:600;text-decoration:none}
+
+/* ════════════════════════════════════════════════════════
+   ANIMATIONS
+════════════════════════════════════════════════════════ */
+.fade-in{animation:fadeIn .28s var(--ez)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════════ */
+@media(max-width:860px){
+  :root{--sw:64px}
+  .sb-win-title,.brand-name,.nav-grp-lbl,.nav-item>span:not(.nav-ic),.sb-foot span{display:none}
+  .sb-brand{justify-content:center;padding:14px 0}
+  .nav-item{justify-content:center;padding:8px}
+  .nav-ic{margin:0}
+  #unread-badge{position:absolute;top:4px;right:4px;min-width:14px;height:14px;font-size:9px}
+  .scroll{padding:20px 18px 48px}
+  .topbar{padding:0 20px}
+  .stats-row{grid-template-columns:1fr}
+  .form-grid-2{grid-template-columns:1fr}
+  .form-field.span-2{grid-column:span 1}
+  .projects-grid{grid-template-columns:1fr}
+  .settings-label{flex:0 0 140px}
+}
+@media(max-width:540px){
+  :root{--sw:0px}
+  .sidebar{display:none}
+  .scroll{padding:16px 14px 40px}
+  .topbar{padding:0 14px}
+  .toolbar{flex-direction:column;align-items:stretch}
+  .search-box{width:100%}
+  .modal{max-width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-chrome">
+    <span class="tl tl-r"></span><span class="tl tl-y"></span><span class="tl tl-g"></span>
+    <span class="sb-win-title">Admin Panel</span>
+  </div>
+  <div class="sb-brand">
+    <div class="brand-mark"><i class="fas fa-layer-group"></i></div>
+    <span class="brand-name">Portfolio</span>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-grp">
+      <div class="nav-grp-lbl">Overview</div>
+      <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+        <span class="nav-ic"><i class="fas fa-th-large"></i></span><span>Dashboard</span>
+      </div>
+    </div>
+    <div class="nav-grp">
+      <div class="nav-grp-lbl">Projects</div>
+      <div class="nav-item" data-page="add-project" onclick="navigate('add-project')">
+        <span class="nav-ic"><i class="fas fa-plus"></i></span><span>New Project</span>
+      </div>
+      <div class="nav-item" data-page="all-projects" onclick="navigate('all-projects')">
+        <span class="nav-ic"><i class="fas fa-folder-open"></i></span><span>Library</span>
+      </div>
+    </div>
+    <div class="nav-grp">
+      <div class="nav-grp-lbl">Inbox</div>
+      <div class="nav-item" data-page="contacts" onclick="navigate('contacts')" style="position:relative">
+        <span class="nav-ic"><i class="fas fa-envelope"></i></span>
+        <span>Messages</span>
+        <span id="unread-badge"></span>
+      </div>
+    </div>
+    <div class="nav-grp">
+      <div class="nav-grp-lbl">System</div>
+      <div class="nav-item" data-page="config" onclick="navigate('config')">
+        <span class="nav-ic"><i class="fas fa-sliders-h"></i></span><span>Settings</span>
+      </div>
+    </div>
+  </nav>
+  <div class="sb-foot">
+    <div class="env-status">
+      <div class="env-dot" id="env-dot"></div>
+      <span id="env-label">Connecting…</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══════════════════════════════════════════════ -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="tb-title" id="topbar-title">Dashboard</div>
+      <div class="tb-sub"   id="topbar-sub">Overview of your portfolio</div>
+    </div>
+  </div>
+
+  <div class="scroll">
+
+  <!-- Dashboard -->
+  <section class="page active" id="page-dashboard">
+    <div id="dashboard-config-banner"></div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--blue-g);color:var(--blue)"><i class="fas fa-briefcase"></i></div>
+        <div><div class="stat-num" id="stat-projects">—</div><div class="stat-label">Total Projects</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--grn-g);color:var(--green)"><i class="fas fa-comment-dots"></i></div>
+        <div><div class="stat-num" id="stat-messages">—</div><div class="stat-label">Submissions</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--org-g);color:var(--orng)"><i class="fas fa-bell"></i></div>
+        <div><div class="stat-num" id="stat-unread">—</div><div class="stat-label">Unread</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-title">Recent Projects</span>
+        <button class="btn btn-secondary btn-sm" onclick="navigate('all-projects')">View all <i class="fas fa-arrow-right" style="font-size:10px;margin-left:1px"></i></button>
+      </div>
+      <div id="dashboard-recent" style="padding:0">
+        <div class="empty-state">
+          <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+          <h3 class="empty-state-title">No projects yet</h3>
+          <p class="empty-state-desc">Add your first project to see it here.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Add / Edit Project -->
+  <section class="page" id="page-add-project">
+    <form id="project-form" onsubmit="submitProject(event)">
+      <div class="scard">
+        <div class="scard-hd">
+          <div class="scard-ico" style="background:var(--blue-g);color:var(--blue)"><i class="fas fa-info-circle"></i></div>
+          <span>Basic Information</span>
+        </div>
+        <div class="scard-bd">
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label>Project Title <span class="required">*</span></label>
+              <input type="text" id="f-title" placeholder="e.g. E-Commerce Platform" required maxlength="120"/>
+            </div>
+            <div class="form-field" style="position:relative">
+              <label>Category <span class="required">*</span></label>
+              <div class="custom-dropdown" id="category-dropdown" onclick="toggleCategoryDropdown()">
+                <input type="hidden" id="f-category" required/>
+                <div class="dropdown-trigger placeholder" id="category-display">Select category</div>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
+              </div>
+              <div class="category-dropdown-container" id="category-dropdown-container" style="display:none">
+                <div class="category-dropdown-menu">
+                  <div class="category-list" id="category-list">
+                    <div class="category-item" data-value="Web App" onclick="selectCategory('Web App')"><span>Web App</span><i class="fas fa-check"></i></div>
+                    <div class="category-item" data-value="Mobile App" onclick="selectCategory('Mobile App')"><span>Mobile App</span><i class="fas fa-check"></i></div>
+                    <div class="category-item" data-value="API / Backend" onclick="selectCategory('API / Backend')"><span>API / Backend</span><i class="fas fa-check"></i></div>
+                    <div class="category-item" data-value="UI / UX Design" onclick="selectCategory('UI / UX Design')"><span>UI / UX Design</span><i class="fas fa-check"></i></div>
+                    <div class="category-item" data-value="Open Source" onclick="selectCategory('Open Source')"><span>Open Source</span><i class="fas fa-check"></i></div>
+                    <div class="category-item" data-value="Other" onclick="selectCategory('Other')"><span>Other</span><i class="fas fa-check"></i></div>
+                  </div>
+                  <div class="add-category-section">
+                    <div class="add-category-input">
+                      <input type="text" id="custom-category-input" placeholder="Add custom…" onkeydown="handleCustomCategoryKey(event)"/>
+                      <button type="button" class="btn btn-primary btn-sm" onclick="addCustomCategory()"><i class="fas fa-plus"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Year <span class="required">*</span></label>
+              <input type="number" id="f-year" placeholder="2024" required min="2000" max="2100"/>
+            </div>
+            <div class="form-field">
+              <label>Live URL</label>
+              <input type="url" id="f-live-link" placeholder="https://example.com"/>
+            </div>
+            <div class="form-field span-2">
+              <label>Source Code URL</label>
+              <input type="url" id="f-source-link" placeholder="https://github.com/username/repo"/>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <label class="form-field"><label>Short Summary <span class="required">*</span></label>
+            <input type="text" id="f-short-desc" placeholder="One-line description" required maxlength="200"/></label>
+          </div>
+          <div style="margin-top:14px">
+            <div class="form-field"><label>Full Description</label>
+            <textarea id="f-description" rows="5" placeholder="What it does, your role, challenges…"></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scard">
+        <div class="scard-hd">
+          <div class="scard-ico" style="background:var(--prp-g);color:var(--purp)"><i class="fas fa-code"></i></div>
+          <span>Tech Stack &amp; Features</span>
+        </div>
+        <div class="scard-bd">
+          <div class="form-field">
+            <label>Technologies Used</label>
+            <div class="tags-container" id="tech-tags-box" onclick="focusTechInput()">
+              <input class="tags-input" id="tech-input" placeholder="Type a technology and press Enter…" onkeydown="handleTagKey(event,'tech')"/>
+            </div>
+            <span class="field-hint">Press <kbd style="font-family:var(--mono);font-size:11px;background:var(--c3);padding:1px 5px;border-radius:3px;border:1px solid var(--s1)">Enter</kbd> or comma to add</span>
+          </div>
+          <div class="form-field" style="margin-top:20px">
+            <label>Key Features</label>
+            <div class="features-list" id="features-list">
+              <div class="feature-item">
+                <input type="text" placeholder="e.g. Real-time data sync"/>
+                <button type="button" class="btn-icon danger" onclick="removeFeature(this)"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+            <button type="button" class="btn-add-item" onclick="addFeature()">
+              <i class="fas fa-plus" style="font-size:11px"></i> Add Feature
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="scard">
+        <div class="scard-hd">
+          <div class="scard-ico" style="background:var(--tel-g);color:var(--teal)"><i class="fas fa-images"></i></div>
+          <span>Project Images</span>
+        </div>
+        <div class="scard-bd">
+          <div class="drop-zone" id="drop-zone"
+               onclick="document.getElementById('file-input').click()"
+               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <input type="file" id="file-input" multiple accept="image/*" onchange="handleFileSelect(event)" style="display:none"/>
+            <div class="dz-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <div class="dz-title">Drop images here or click to browse</div>
+            <div class="dz-hint">PNG, JPG, WebP up to 10 MB — uploaded to GitHub</div>
+          </div>
+          <div class="image-previews" id="image-previews"></div>
+          <div class="upload-progress" id="upload-progress">
+            <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+            <div class="progress-label" id="progress-label"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions-bar">
+        <button type="button" class="btn btn-secondary" onclick="resetProjectForm()"><i class="fas fa-undo"></i> Reset</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn"><i class="fas fa-save"></i> Save Project</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- All Projects -->
+  <section class="page" id="page-all-projects">
+    <div class="toolbar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-input" placeholder="Search projects…" oninput="filterProjects()"/>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-json-input').click()"><i class="fas fa-file-import"></i> Import JSON</button>
+        <input type="file" id="import-json-input" accept=".json" style="display:none" onchange="importProjectsFromJSON(event)"/>
+        <button class="btn btn-primary btn-sm" onclick="navigate('add-project')"><i class="fas fa-plus"></i> New Project</button>
+      </div>
+    </div>
+    <div class="projects-grid" id="projects-grid">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon"><div class="spinner dark"></div></div>
+        <h3 class="empty-state-title">Loading…</h3>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contacts -->
+  <section class="page" id="page-contacts">
+    <div class="toolbar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="msg-search" placeholder="Search messages…" oninput="filterMessages()"/>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table id="contacts-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Date</th><th>Status</th><th style="width:80px"></th></tr></thead>
+          <tbody id="contacts-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:52px;color:var(--t4)">
+              <div style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner dark"></div> Loading…</div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Config / Settings -->
+  <section class="page" id="page-config">
+    <div style="max-width:760px;margin:0 auto">
+      <div class="settings-group">
+        <div class="settings-group-header"><i class="fas fa-database"></i> Supabase</div>
+        <div class="settings-row">
+          <div class="settings-label">Project URL</div>
+          <div class="settings-content"><input type="text" id="cfg-supabase-url" placeholder="https://xxxxxxxxxxxx.supabase.co"/></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Anon Key</div>
+          <div class="settings-content"><input type="text" id="cfg-supabase-key" placeholder="eyJhbGciOiJIUzI1Ni…"/></div>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-header"><i class="fab fa-github"></i> GitHub Image Storage</div>
+        <div class="settings-row">
+          <div class="settings-label">Access Token</div>
+          <div class="settings-content"><input type="password" id="cfg-github-token" placeholder="ghp_xxxxxxxxxxxx"/></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Repository</div>
+          <div class="settings-content" style="gap:8px">
+            <input type="text" id="cfg-github-repo" placeholder="owner/repo" style="flex:2"/>
+            <input type="text" id="cfg-github-branch" placeholder="branch" style="flex:1"/>
+          </div>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-header"><i class="fas fa-cog"></i> Actions</div>
+        <div class="settings-row">
+          <div class="settings-label">Backup</div>
+          <div class="settings-content" style="gap:10px">
+            <button class="btn btn-secondary btn-sm" onclick="exportConfig()"><i class="fas fa-download"></i> Export</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-config-input').click()"><i class="fas fa-upload"></i> Import</button>
+            <input type="file" id="import-config-input" accept=".json" style="display:none" onchange="importConfig(event)"/>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Reset</div>
+          <div class="settings-content"><button class="btn btn-danger btn-sm" onclick="clearConfig()"><i class="fas fa-trash"></i> Clear All</button></div>
+        </div>
+        <div class="settings-row" style="background:var(--blue-g)">
+          <div class="settings-label" style="color:var(--blue);font-weight:600">Save Changes</div>
+          <div class="settings-content"><button class="btn btn-primary" onclick="saveConfig()" style="flex:1"><i class="fas fa-check"></i> Save Configuration</button></div>
+        </div>
+      </div>
+      <div style="margin-top:36px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:12px">Database Schema — Run in Supabase SQL Editor</div>
+        <div class="sql-block" onclick="copySQL()" title="Click to copy">
+          <span class="sql-copy-hint" id="sql-copy-hint">Click to copy</span>
+          <pre id="sql-code">-- projects table
+CREATE TABLE projects (
+  id               uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title            text NOT NULL,
+  short_description text,
+  description      text,
+  key_features     jsonb DEFAULT '[]',
+  tech_stack       jsonb DEFAULT '[]',
+  category         text,
+  year             integer,
+  live_link        text,
+  source_link      text,
+  images           jsonb DEFAULT '[]',
+  created_at       timestamptz DEFAULT now()
+);
+
+-- contacts table
+CREATE TABLE contacts (
+  id         uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name       text NOT NULL,
+  email      text NOT NULL,
+  subject    text,
+  message    text NOT NULL,
+  is_read    boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Row Level Security
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all" ON projects FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all" ON contacts FOR ALL USING (true) WITH CHECK (true);</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /scroll -->
+</main>
+
+<!-- ═══ MODALS ═════════════════════════════════════════════ -->
+<div class="modal-overlay" id="delete-modal" style="display:none" onclick="closeDeleteModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Delete Project</div><div style="font-size:12.5px;color:var(--t3);margin-top:3px">This cannot be undone</div></div>
+      <button class="btn-icon" onclick="closeDeleteModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body"><p style="font-size:14px;color:var(--t2);line-height:1.65">Delete <strong id="delete-title" style="color:var(--t1)"></strong>?</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()"><i class="fas fa-trash-alt"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="delete-message-modal" style="display:none" onclick="closeDeleteMessageModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Delete Message</div><div style="font-size:12.5px;color:var(--t3);margin-top:3px">This cannot be undone</div></div>
+      <button class="btn-icon" onclick="closeDeleteMessageModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body"><p style="font-size:14px;color:var(--t2);line-height:1.65">Delete message from <strong id="delete-msg-name" style="color:var(--t1)"></strong>?</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDeleteMessageModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-delete-msg-btn" onclick="confirmDeleteMessage()"><i class="fas fa-trash-alt"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="message-modal" style="display:none" onclick="closeMessageModal(event)">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div style="flex:1;min-width:0">
+        <div class="modal-title" id="msg-from">Message</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:3px" id="msg-date"></div>
+      </div>
+      <button class="btn-icon" onclick="closeMessageModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="msg-meta-grid">
+        <div><div class="mm-lbl">From</div><div class="mm-val" id="msg-sender-name"></div><div style="margin-top:2px"><a href="" id="msg-sender-email" style="font-size:12.5px;color:var(--blue);text-decoration:none"></a></div></div>
+        <div><div class="mm-lbl">Subject</div><div class="mm-val" id="msg-subject">—</div></div>
+        <div style="grid-column:span 2"><div class="mm-lbl">Date</div><div class="mm-val" id="msg-full-date"></div></div>
+      </div>
+      <div class="msg-body-text" id="msg-content"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeMessageModal()">Close</button>
+      <button class="btn btn-danger" onclick="openDeleteMessageFromViewer()"><i class="fas fa-trash-alt"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let supabaseClient = null
+let allProjects    = []
+let allMessages    = []
+let techTags       = []
+let selectedFiles  = []
+let editingId      = null
+let deleteTargetId = null
+let deleteTargetMsg = null
+let uploadedUrls   = []
+let currentMessage = null
+
+const PAGES = {
+  dashboard:    { title: 'Dashboard',       sub: 'Overview of your portfolio' },
+  'add-project':{ title: 'Add Project',     sub: 'Fill in the details below' },
+  'all-projects':{ title:'All Projects',    sub: 'Manage your portfolio projects' },
+  contacts:     { title: 'Messages',        sub: 'Contact form submissions' },
+  config:       { title: 'Configuration',   sub: 'Set up your API credentials' },
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONFIG (localStorage)
+// ═══════════════════════════════════════════════════════════════════════════
+function getConfig() {
+  return {
+    supabaseUrl:    localStorage.getItem('cfg_supabase_url')    || '',
+    supabaseKey:    localStorage.getItem('cfg_supabase_key')    || '',
+    githubToken:    localStorage.getItem('cfg_github_token')    || '',
+    githubRepo:     localStorage.getItem('cfg_github_repo')     || '',
+    githubBranch:   localStorage.getItem('cfg_github_branch')   || 'main',
+  }
+}
+
+function saveConfig() {
+  const fields = {
+    cfg_supabase_url:   'cfg-supabase-url',
+    cfg_supabase_key:   'cfg-supabase-key',
+    cfg_github_token:   'cfg-github-token',
+    cfg_github_repo:    'cfg-github-repo',
+    cfg_github_branch:  'cfg-github-branch',
+  }
+  for (const [key, id] of Object.entries(fields)) {
+    localStorage.setItem(key, document.getElementById(id).value.trim())
+  }
+  initSupabase()
+  checkEnvStatus()
+  toast('Configuration saved!', 'success')
+}
+
+function clearConfig() {
+  ['cfg_supabase_url','cfg_supabase_key','cfg_github_token','cfg_github_repo','cfg_github_branch']
+    .forEach(k => localStorage.removeItem(k))
+  loadConfigFields()
+  supabaseClient = null
+  checkEnvStatus()
+  toast('Configuration cleared.')
+}
+
+function exportConfig() {
+  const config = getConfig()
+  const dataStr = JSON.stringify(config, null, 2)
+  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
+
+  const exportFileDefaultName = 'portfolio-config.json'
+
+  const linkElement = document.createElement('a')
+  linkElement.setAttribute('href', dataUri)
+  linkElement.setAttribute('download', exportFileDefaultName)
+  linkElement.click()
+
+  toast('Configuration exported!', 'success')
+}
+
+function importConfig(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const config = JSON.parse(e.target.result)
+      if (typeof config !== 'object' || config === null) {
+        toast('Invalid configuration file.', 'error')
+        return
+      }
+
+      // Import the config
+      if (config.supabaseUrl) localStorage.setItem('cfg_supabase_url', config.supabaseUrl)
+      if (config.supabaseKey) localStorage.setItem('cfg_supabase_key', config.supabaseKey)
+      if (config.githubToken) localStorage.setItem('cfg_github_token', config.githubToken)
+      if (config.githubRepo) localStorage.setItem('cfg_github_repo', config.githubRepo)
+      if (config.githubBranch) localStorage.setItem('cfg_github_branch', config.githubBranch || 'main')
+
+      loadConfigFields()
+      initSupabase()
+      checkEnvStatus()
+      toast('Configuration imported!', 'success')
+
+    } catch (err) {
+      toast('Invalid configuration file.', 'error')
+    }
+  }
+  reader.readAsText(file)
+  event.target.value = '' // Reset file input
+}
+
+function loadConfigFields() {
+  const c = getConfig()
+  document.getElementById('cfg-supabase-url').value  = c.supabaseUrl
+  document.getElementById('cfg-supabase-key').value  = c.supabaseKey
+  document.getElementById('cfg-github-token').value  = c.githubToken
+  document.getElementById('cfg-github-repo').value   = c.githubRepo
+  document.getElementById('cfg-github-branch').value = c.githubBranch
+}
+
+function initSupabase() {
+  const { supabaseUrl, supabaseKey } = getConfig()
+  if (supabaseUrl && supabaseKey) {
+    try {
+      supabaseClient = supabase.createClient(supabaseUrl, supabaseKey)
+    } catch(e) {
+      supabaseClient = null
+    }
+  }
+}
+
+function checkEnvStatus() {
+  const { supabaseUrl, supabaseKey, githubToken, githubRepo } = getConfig()
+  const ok = supabaseUrl && supabaseKey && githubToken && githubRepo
+  const dot   = document.getElementById('env-dot')
+  const label = document.getElementById('env-label')
+  dot.className   = 'env-dot' + (ok ? '' : ' error')
+  label.textContent = ok ? 'Connected' : 'Not configured'
+
+  // Config banner on dashboard
+  const banner = document.getElementById('dashboard-config-banner')
+  if (!ok) {
+    banner.innerHTML = `
+      <div id="config-banner" style="background:rgba(255,149,0,0.1); border:1px solid rgba(255,149,0,0.2); border-radius:12px; padding:16px; margin-bottom:24px; display:flex; gap:12px; align-items:flex-start;">
+        <i class="ph-bold ph-warning-circle" style="color:var(--warn); flex-shrink:0; font-size:20px;"></i>
+        <p style="font-size:14px; color:var(--text-secondary); line-height:1.5;">
+          <strong style="display:block; color:var(--text-primary); margin-bottom:2px">Setup required</strong>
+          Go to <a href="#" onclick="navigate('config')" style="color:var(--accent); font-weight:600; text-decoration:none;">Configuration</a> and enter your Supabase URL, Anon Key, and GitHub credentials to get started.
+        </p>
+      </div>`
+  } else {
+    banner.innerHTML = ''
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+function navigate(page) {
+  // hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+
+  document.getElementById(`page-${page}`).classList.add('active')
+  document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active')
+
+  const meta = PAGES[page] || {}
+  document.getElementById('topbar-title').textContent = meta.title || page
+  document.getElementById('topbar-sub').textContent   = meta.sub   || ''
+
+  // page-specific loaders
+  if (page === 'all-projects') loadProjects()
+  if (page === 'contacts')     loadMessages()
+  if (page === 'dashboard')    loadDashboard()
+  if (page === 'config')       loadConfigFields()
+  if (page === 'add-project' && !editingId) {
+    document.getElementById('topbar-title').textContent = 'Add Project'
+    document.getElementById('topbar-sub').textContent   = 'Fill in the details below'
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CATEGORY DROPDOWN
+// ═══════════════════════════════════════════════════════════════════════════
+let categoryDropdownOpen = false
+
+function toggleCategoryDropdown() {
+  if (categoryDropdownOpen) {
+    closeCategoryDropdown()
+  } else {
+    openCategoryDropdown()
+  }
+}
+
+function openCategoryDropdown() {
+  const container = document.getElementById('category-dropdown-container')
+  container.style.display = 'block'
+  categoryDropdownOpen = true
+  
+  // Highlight current selection
+  const currentValue = document.getElementById('f-category').value
+  updateCategorySelection(currentValue)
+  
+  // Close when clicking outside
+  setTimeout(() => {
+    document.addEventListener('click', closeCategoryDropdownOnClickOutside)
+  }, 10)
+}
+
+function closeCategoryDropdown() {
+  const container = document.getElementById('category-dropdown-container')
+  container.style.display = 'none'
+  categoryDropdownOpen = false
+  document.removeEventListener('click', closeCategoryDropdownOnClickOutside)
+}
+
+function closeCategoryDropdownOnClickOutside(e) {
+  const container = document.getElementById('category-dropdown-container')
+  const dropdown = document.getElementById('category-dropdown')
+  if (!container.contains(e.target) && !dropdown.contains(e.target)) {
+    closeCategoryDropdown()
+  }
+}
+
+function selectCategory(value) {
+  document.getElementById('f-category').value = value
+  document.getElementById('category-display').textContent = value
+  document.getElementById('category-display').classList.remove('placeholder')
+  updateCategorySelection(value)
+  closeCategoryDropdown()
+}
+
+function updateCategorySelection(value) {
+  document.querySelectorAll('.category-item').forEach(item => {
+    if (item.dataset.value === value) {
+      item.classList.add('selected')
+    } else {
+      item.classList.remove('selected')
+    }
+  })
+}
+
+function addCustomCategory() {
+  const input = document.getElementById('custom-category-input')
+  const value = input.value.trim()
+  if (!value) {
+    toast('Please enter a category name', 'error')
+    return
+  }
+  // Check if already exists
+  const existing = document.querySelector(`.category-item[data-value="${value}"]`)
+  if (existing) {
+    selectCategory(value)
+    input.value = ''
+    return
+  }
+  // Add new category to the list
+  const list = document.getElementById('category-list')
+  const newItem = document.createElement('div')
+  newItem.className = 'category-item'
+  newItem.dataset.value = value
+  newItem.onclick = () => selectCategory(value)
+  newItem.innerHTML = `<span>${escHtml(value)}</span><i class="fas fa-check"></i>`
+  list.appendChild(newItem)
+  // Select it
+  selectCategory(value)
+  input.value = ''
+  toast(`Added category: ${value}`, 'success')
+}
+
+function handleCustomCategoryKey(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    addCustomCategory()
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  GITHUB UPLOAD
+// ═══════════════════════════════════════════════════════════════════════════
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload  = () => resolve(reader.result.split(',')[1])
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function slugify(text) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+async function uploadImageToGitHub(file, projectTitle) {
+  const { githubToken, githubRepo, githubBranch } = getConfig()
+  if (!githubToken || !githubRepo) throw new Error('GitHub credentials not configured.')
+
+  const [owner, repo] = githubRepo.split('/')
+  const ext      = file.name.split('.').pop().toLowerCase()
+  const filename = `${slugify(projectTitle || 'project')}-${Date.now()}.${ext}`
+  const path     = `portfolio-images/${filename}`
+  const content  = await fileToBase64(file)
+
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${githubToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({
+      message: `upload: ${filename}`,
+      content,
+      branch: githubBranch || 'main',
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.message || `GitHub upload failed (${res.status})`)
+  }
+
+  const data = await res.json()
+  return data.content.download_url
+}
+
+async function uploadAllImages(projectTitle) {
+  if (!selectedFiles.length) return []
+
+  const progress = document.getElementById('upload-progress')
+  const fill     = document.getElementById('progress-fill')
+  const label    = document.getElementById('progress-label')
+  progress.style.display = 'block'
+
+  const urls = []
+  for (let i = 0; i < selectedFiles.length; i++) {
+    const file = selectedFiles[i]
+    const idx  = i
+    label.textContent = `Uploading ${i + 1} of ${selectedFiles.length}…`
+    fill.style.width  = `${Math.round(((i) / selectedFiles.length) * 100)}%`
+
+    // update preview status
+    const previews = document.querySelectorAll('.preview-item')
+    if (previews[idx]) {
+      const s = previews[idx].querySelector('.img-status')
+      if (s) s.textContent = '⬆'
+    }
+
+    try {
+      const url = await uploadImageToGitHub(file, projectTitle)
+      urls.push(url)
+      if (previews[idx]) {
+        const s = previews[idx].querySelector('.img-status')
+        if (s) { s.textContent = '✓'; s.classList.add('success') }
+      }
+    } catch (e) {
+      if (previews[idx]) {
+        const s = previews[idx].querySelector('.img-status')
+        if (s) { s.textContent = '✗'; s.classList.add('error') }
+      }
+      toast(`Upload failed: ${e.message}`, 'error')
+    }
+  }
+
+  fill.style.width  = '100%'
+  label.textContent = `${urls.length} of ${selectedFiles.length} uploaded.`
+  return urls
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PROJECT FORM
+// ═══════════════════════════════════════════════════════════════════════════
+function resetProjectForm() {
+  document.getElementById('project-form').reset()
+  editingId   = null
+  techTags    = []
+  selectedFiles = []
+  uploadedUrls  = []
+  renderTechTags()
+  document.getElementById('image-previews').innerHTML = ''
+  document.getElementById('upload-progress').style.display = 'none'
+  // reset features to one empty
+  document.getElementById('features-list').innerHTML = `
+    <div class="feature-item">
+      <input type="text" placeholder="e.g. Real-time data sync"/>
+      <button type="button" class="btn-icon danger" onclick="removeFeature(this)">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>`
+  document.getElementById('topbar-title').textContent = 'Add Project'
+  document.getElementById('submit-btn').innerHTML = `<i class="fas fa-save"></i> Save Project`
+  document.getElementById('category-display').textContent = 'Select category'
+  document.getElementById('category-display').classList.add('placeholder')
+}
+
+async function submitProject(e) {
+  e.preventDefault()
+  if (!supabaseClient) { toast('Please configure Supabase credentials first.', 'error'); return }
+
+  const btn = document.getElementById('submit-btn')
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div> Saving…'
+
+  const title = document.getElementById('f-title').value.trim()
+
+  // Upload images first
+  let imageUrls = uploadedUrls.slice() // already uploaded ones (edit mode)
+  if (selectedFiles.length) {
+    const newUrls = await uploadAllImages(title)
+    imageUrls = imageUrls.concat(newUrls)
+  }
+
+  // Collect key features
+  const featureInputs = document.querySelectorAll('#features-list .feature-item input')
+  const keyFeatures   = [...featureInputs].map(i => i.value.trim()).filter(Boolean)
+
+  const payload = {
+    title,
+    short_description: document.getElementById('f-short-desc').value.trim(),
+    description:       document.getElementById('f-description').value.trim(),
+    key_features:      keyFeatures,
+    tech_stack:        techTags,
+    category:          document.getElementById('f-category').value,
+    year:              parseInt(document.getElementById('f-year').value) || new Date().getFullYear(),
+    live_link:         document.getElementById('f-live-link').value.trim(),
+    source_link:       document.getElementById('f-source-link').value.trim(),
+    images:            imageUrls,
+  }
+
+  let error
+  if (editingId) {
+    ;({ error } = await supabaseClient.from('projects').update(payload).eq('id', editingId))
+  } else {
+    ;({ error } = await supabaseClient.from('projects').insert([payload]))
+  }
+
+  if (error) {
+    toast(`Error: ${error.message}`, 'error')
+  } else {
+    toast(editingId ? 'Project updated!' : 'Project saved!', 'success')
+    resetProjectForm()
+    navigate('all-projects')
+  }
+
+  btn.disabled = false
+  btn.innerHTML = `<i class="fas fa-save"></i> ${editingId ? 'Update Project' : 'Save Project'}`
+  closeCategoryDropdown()
+}
+
+function editProject(project) {
+  editingId = project.id
+  document.getElementById('f-title').value       = project.title       || ''
+  document.getElementById('f-short-desc').value  = project.short_description || ''
+  document.getElementById('f-description').value = project.description || ''
+  
+  // Update category display
+  const category = project.category || ''
+  document.getElementById('f-category').value = category
+  const catDisplay = document.getElementById('category-display')
+  if (category) {
+    catDisplay.textContent = category
+    catDisplay.classList.remove('placeholder')
+  } else {
+    catDisplay.textContent = 'Select category'
+    catDisplay.classList.add('placeholder')
+  }
+  
+  document.getElementById('f-year').value        = project.year        || ''
+  document.getElementById('f-live-link').value   = project.live_link   || ''
+  document.getElementById('f-source-link').value = project.source_link || ''
+
+  // tech tags
+  techTags = Array.isArray(project.tech_stack) ? project.tech_stack : []
+  renderTechTags()
+
+  // key features
+  const fl = document.getElementById('features-list')
+  const feats = Array.isArray(project.key_features) ? project.key_features : []
+  fl.innerHTML = (feats.length ? feats : ['']).map(f => `
+    <div class="feature-item">
+      <input type="text" value="${escHtml(f)}" placeholder="e.g. Real-time data sync"/>
+      <button type="button" class="btn-icon danger" onclick="removeFeature(this)">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>`).join('')
+
+  // existing images as previews
+  uploadedUrls  = Array.isArray(project.images) ? project.images : []
+  selectedFiles = []
+  const previews = document.getElementById('image-previews')
+  previews.innerHTML = uploadedUrls.map((url, i) => `
+    <div class="preview-item">
+      <img src="${escHtml(url)}" onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%23eee\\'/></svg>'"/>
+      <button class="remove-img" onclick="removeExistingImage(${i})" title="Remove">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('')
+
+  document.getElementById('upload-progress').style.display = 'none'
+  document.getElementById('topbar-title').textContent = 'Edit Project'
+  document.getElementById('submit-btn').innerHTML = `
+    <i class="fas fa-save"></i> Update Project`
+
+  navigate('add-project')
+}
+
+function removeExistingImage(index) {
+  uploadedUrls.splice(index, 1)
+  editProject({ ...currentEditProject(), images: uploadedUrls })
+}
+
+function currentEditProject() {
+  return allProjects.find(p => p.id === editingId) || {}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  TECH TAGS
+// ═══════════════════════════════════════════════════════════════════════════
+function renderTechTags() {
+  const box   = document.getElementById('tech-tags-box')
+  const input = document.getElementById('tech-input')
+  // remove old tags
+  box.querySelectorAll('.tag').forEach(t => t.remove())
+  // insert before input
+  techTags.forEach((tag, i) => {
+    const el = document.createElement('div')
+    el.className = 'tag'
+    el.innerHTML = `${escHtml(tag)}<button type="button" onclick="removeTag(${i})">×</button>`
+    box.insertBefore(el, input)
+  })
+}
+
+function addTag(value) {
+  const v = value.trim().replace(/,$/, '')
+  if (v && !techTags.includes(v)) {
+    techTags.push(v)
+    renderTechTags()
+  }
+}
+
+function removeTag(i) {
+  techTags.splice(i, 1)
+  renderTechTags()
+}
+
+function handleTagKey(e, type) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    addTag(e.target.value)
+    e.target.value = ''
+  } else if (e.key === 'Backspace' && !e.target.value && techTags.length) {
+    techTags.pop()
+    renderTechTags()
+  }
+}
+
+function focusTechInput() { document.getElementById('tech-input').focus() }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  KEY FEATURES
+// ═══════════════════════════════════════════════════════════════════════════
+function addFeature() {
+  const list = document.getElementById('features-list')
+  const div  = document.createElement('div')
+  div.className = 'feature-item'
+  div.innerHTML = `
+    <input type="text" placeholder="e.g. Real-time data sync"/>
+    <button type="button" class="btn-icon danger" onclick="removeFeature(this)">
+      <i class="fas fa-times"></i>
+    </button>`
+  list.appendChild(div)
+  div.querySelector('input').focus()
+}
+
+function removeFeature(btn) {
+  const list = document.getElementById('features-list')
+  if (list.children.length <= 1) { btn.closest('.feature-item').querySelector('input').value = ''; return }
+  btn.closest('.feature-item').remove()
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  IMAGE DROP / PREVIEW
+// ═══════════════════════════════════════════════════════════════════════════
+function handleDragOver(e)  { e.preventDefault(); document.getElementById('drop-zone').classList.add('dragover') }
+function handleDragLeave(e) { document.getElementById('drop-zone').classList.remove('dragover') }
+function handleDrop(e) {
+  e.preventDefault()
+  document.getElementById('drop-zone').classList.remove('dragover')
+  addFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')))
+}
+function handleFileSelect(e) { addFiles([...e.target.files]) }
+
+function addFiles(files) {
+  files.forEach(file => {
+    if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+      selectedFiles.push(file)
+      renderFilePreview(file, selectedFiles.length - 1)
+    }
+  })
+}
+
+function renderFilePreview(file, index) {
+  const container = document.getElementById('image-previews')
+  const div       = document.createElement('div')
+  div.className = 'preview-item'
+  div.id = `prev-${index}`
+
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    div.innerHTML = `
+      <img src="${ev.target.result}" alt=""/>
+      <div class="img-status" id="status-${index}"></div>
+      <button class="remove-img" onclick="removeSelectedFile(${index})" title="Remove">
+        <i class="fas fa-times"></i>
+      </button>`
+  }
+  reader.readAsDataURL(file)
+  container.appendChild(div)
+}
+
+function removeSelectedFile(index) {
+  selectedFiles[index] = null
+  const el = document.getElementById(`prev-${index}`)
+  if (el) el.remove()
+  selectedFiles = selectedFiles.filter(Boolean)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  LOAD PROJECTS
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadProjects() {
+  if (!supabaseClient) {
+    document.getElementById('projects-grid').innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <h3 class="empty-state-title">Not configured</h3>
+        <p class="empty-state-desc">Add your Supabase credentials in <a href="#" onclick="navigate('config')" style="color:var(--accent); font-weight:600">Settings</a> to get started.</p>
+      </div>`
+    return
+  }
+
+  const { data, error } = await supabaseClient.from('projects').select('*').order('created_at', { ascending: false })
+  if (error) { toast(`Error loading projects: ${error.message}`, 'error'); return }
+  allProjects = data || []
+  renderProjects(allProjects)
+  document.getElementById('stat-projects').textContent = allProjects.length
+}
+
+function renderProjects(projects) {
+  const grid = document.getElementById('projects-grid')
+  if (!projects.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon"><i class="fas fa-folder-plus"></i></div>
+        <h3 class="empty-state-title">No projects yet</h3>
+        <p class="empty-state-desc">Click "New Project" to showcase your first work.</p>
+      </div>`
+    return
+  }
+
+  grid.innerHTML = projects.map(p => {
+    const img   = Array.isArray(p.images) && p.images.length ? `<img src="${escHtml(p.images[0])}" alt="" onerror="this.style.display='none'"/>` : '<div style="height:160px;display:flex;align-items:center;justify-content:center;color:var(--text-quaternary);font-size:12px;background:var(--surface)">No image</div>'
+    const tags  = (p.tech_stack || []).slice(0,2).map(t => `<span class="chip">${escHtml(t)}</span>`).join('')
+    const links = []
+    if (p.live_link) links.push(`<a href="${escHtml(p.live_link)}" target="_blank" class="btn-icon" title="Live Demo" style="text-decoration:none"><i class="fas fa-external-link-alt"></i></a>`)
+    if (p.source_link) links.push(`<a href="${escHtml(p.source_link)}" target="_blank" class="btn-icon" title="Source Code" style="text-decoration:none"><i class="fab fa-github"></i></a>`)
+    return `
+    <div class="project-card fade-in" data-project-id="${p.id}">
+      <div class="project-card-img">${img}</div>
+      <div class="project-card-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+          <h3 class="project-card-title">${escHtml(p.title)}</h3>
+          <span class="chip category" style="font-size:11px;flex-shrink:0">${escHtml(p.category || '—')}</span>
+        </div>
+        <div class="project-card-desc">${escHtml(p.short_description || '')}</div>
+        <div class="project-card-actions">
+          <div style="display:flex; gap:6px;">${tags}</div>
+          <div style="display:flex; gap:4px;">
+            ${links.join('')}
+            <button class="btn-icon" title="Edit" onclick="handleEditProject(event)" data-project-id="${p.id}">
+              <i class="fas fa-pencil-alt"></i>
+            </button>
+            <button class="btn-icon danger" title="Delete" onclick="handleDeleteProject(event)" data-project-id="${p.id}" data-project-title="${escHtml(p.title)}">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`
+  }).join('')
+}
+
+function handleEditProject(event) {
+  event.preventDefault()
+  event.stopPropagation()
+  const btn = event.currentTarget
+  const projectId = btn.dataset.projectId
+  const project = allProjects.find(p => p.id === projectId)
+  if (project) editProject(project)
+}
+
+function handleDeleteProject(event) {
+  event.preventDefault()
+  event.stopPropagation()
+  const btn = event.currentTarget
+  const projectId = btn.dataset.projectId
+  const projectTitle = btn.dataset.projectTitle
+  openDeleteModal(projectId, projectTitle)
+}
+
+function filterProjects() {
+  const q = document.getElementById('search-input').value.toLowerCase()
+  const filtered = allProjects.filter(p =>
+    (p.title || '').toLowerCase().includes(q) ||
+    (p.short_description || '').toLowerCase().includes(q) ||
+    (p.category || '').toLowerCase().includes(q) ||
+    ((p.tech_stack || []).join(' ')).toLowerCase().includes(q)
+  )
+  renderProjects(filtered)
+}
+
+async function importProjectsFromJSON(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    try {
+      const projects = JSON.parse(e.target.result)
+      if (!Array.isArray(projects)) {
+        toast('JSON must contain an array of projects.', 'error')
+        return
+      }
+
+      if (!supabaseClient) {
+        toast('Please configure Supabase credentials first.', 'error')
+        return
+      }
+
+      let successCount = 0
+      let errorCount = 0
+
+      for (const project of projects) {
+        try {
+          const payload = {
+            title: project.title || '',
+            short_description: project.short_description || '',
+            description: project.description || '',
+            key_features: Array.isArray(project.key_features) ? project.key_features : [],
+            tech_stack: Array.isArray(project.tech_stack) ? project.tech_stack : [],
+            category: project.category || '',
+            year: project.year || new Date().getFullYear(),
+            live_link: project.live_link || '',
+            source_link: project.source_link || '',
+            images: Array.isArray(project.images) ? project.images : [],
+          }
+
+          const { error } = await supabaseClient.from('projects').insert([payload])
+          if (error) throw error
+          successCount++
+        } catch (err) {
+          console.error('Error importing project:', err)
+          errorCount++
+        }
+      }
+
+      if (successCount > 0) {
+        toast(`Successfully imported ${successCount} project(s).`, 'success')
+        loadProjects()
+        loadDashboard()
+      }
+      if (errorCount > 0) {
+        toast(`Failed to import ${errorCount} project(s).`, 'error')
+      }
+
+    } catch (err) {
+      toast('Invalid JSON file.', 'error')
+    }
+  }
+  reader.readAsText(file)
+  event.target.value = '' // Reset file input
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DELETE PROJECT
+// ═══════════════════════════════════════════════════════════════════════════
+function openDeleteModal(id, title) {
+  deleteTargetId = id
+  document.getElementById('delete-title').textContent = title
+  document.getElementById('delete-modal').style.display = 'flex'
+}
+
+function closeDeleteModal(e) {
+  if (e && e.target !== document.getElementById('delete-modal')) return
+  document.getElementById('delete-modal').style.display = 'none'
+  deleteTargetId = null
+}
+
+async function confirmDelete() {
+  if (!deleteTargetId || !supabaseClient) return
+  const btn = document.getElementById('confirm-delete-btn')
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div> Deleting…'
+
+  const { error } = await supabaseClient.from('projects').delete().eq('id', deleteTargetId)
+  if (error) {
+    toast(`Error: ${error.message}`, 'error')
+  } else {
+    toast('Project deleted.', 'success')
+    document.getElementById('delete-modal').style.display = 'none'
+    deleteTargetId = null
+    loadProjects()
+    loadDashboard()
+  }
+
+  btn.disabled = false
+  btn.innerHTML = `<i class="fas fa-trash-alt" style="font-size:14px;margin-right:6px"></i> Delete`
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONTACTS
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadMessages() {
+  if (!supabaseClient) {
+    document.getElementById('contacts-tbody').innerHTML = `
+      <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink-4)">Configure Supabase credentials to load messages.</td></tr>`
+    return
+  }
+
+  const { data, error } = await supabaseClient.from('contacts').select('*').order('created_at', { ascending: false })
+  if (error) { toast(`Error: ${error.message}`, 'error'); return }
+  allMessages = data || []
+  renderMessages(allMessages)
+
+  const unread = allMessages.filter(m => !m.is_read).length
+  document.getElementById('stat-unread').textContent = unread
+  document.getElementById('stat-messages').textContent = allMessages.length
+  const badge = document.getElementById('unread-badge')
+  if (unread > 0) { badge.style.display = 'inline'; badge.textContent = unread }
+  else badge.style.display = 'none'
+}
+
+function renderMessages(messages) {
+  const tbody = document.getElementById('contacts-tbody')
+  if (!messages.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-quaternary)">No messages yet.</td></tr>`
+    return
+  }
+
+  tbody.innerHTML = messages.map(m => `
+    <tr id="msg-${m.id}" style="${!m.is_read ? 'background:rgba(0,113,227,0.03)' : ''}" class="message-row">
+      <td class="td-name">${escHtml(m.name)}</td>
+      <td class="td-email"><a href="mailto:${escHtml(m.email)}" style="color:var(--accent);text-decoration:none;font-weight:500">${escHtml(m.email)}</a></td>
+      <td style="font-size:13px;color:var(--text-secondary)">${escHtml(m.subject || '—')}</td>
+      <td class="td-msg" title="${escHtml(m.message)}" style="cursor:pointer" data-message-id="${m.id}">${escHtml(m.message.length > 50 ? m.message.slice(0,50)+'…' : m.message)}</td>
+      <td class="td-date">${formatDate(m.created_at)}</td>
+      <td>
+        <span class="badge ${m.is_read ? 'read' : 'unread'}" style="padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; background:${m.is_read ? 'rgba(52,199,89,0.1)' : 'rgba(255,149,0,0.1)'}; color:${m.is_read ? 'var(--success)' : 'var(--warn)'}">
+          ${m.is_read ? 'Read' : 'Unread'}
+        </span>
+      </td>
+      <td>
+        <div style="display:flex;gap:4px">
+          ${!m.is_read ? `<button class="btn-icon mark-read-btn" data-message-id="${m.id}" title="Mark read"><i class="fas fa-check"></i></button>` : ''}
+          <button class="btn-icon danger delete-msg-btn" data-message-id="${m.id}" data-message-name="${escHtml(m.name)}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      </td>
+    </tr>`).join('')
+
+  // Attach event listeners to message rows
+  document.querySelectorAll('.message-row').forEach(row => {
+    row.style.cursor = 'pointer'
+    row.style.transition = 'background 200ms ease'
+    row.addEventListener('mouseenter', () => {
+      if (!row.style.backgroundColor) row.style.backgroundColor = 'var(--surface-hover)'
+    })
+    row.addEventListener('mouseleave', () => {
+      const messageId = row.id.replace('msg-', '')
+      const msg = allMessages.find(m => m.id === messageId)
+      if (msg && !msg.is_read) {
+        row.style.backgroundColor = 'rgba(0,102,255,0.02)'
+      } else {
+        row.style.backgroundColor = ''
+      }
+    })
+  })
+
+  // Message row click to view full message
+  document.querySelectorAll('.td-msg').forEach(cell => {
+    cell.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const messageId = cell.dataset.messageId
+      const msg = allMessages.find(m => m.id === messageId)
+      if (msg) openMessageModal(msg)
+    })
+  })
+
+  // Mark read button listeners
+  document.querySelectorAll('.mark-read-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      markRead(btn.dataset.messageId)
+    })
+  })
+
+  // Delete message button listeners
+  document.querySelectorAll('.delete-msg-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      openDeleteMessageModal(btn.dataset.messageId, btn.dataset.messageName)
+    })
+  })
+}
+
+function filterMessages() {
+  const q = document.getElementById('msg-search').value.toLowerCase()
+  const filtered = allMessages.filter(m =>
+    (m.name || '').toLowerCase().includes(q) ||
+    (m.email || '').toLowerCase().includes(q) ||
+    (m.message || '').toLowerCase().includes(q)
+  )
+  renderMessages(filtered)
+}
+
+async function markRead(id) {
+  if (!supabaseClient) return
+  const { error } = await supabaseClient.from('contacts').update({ is_read: true }).eq('id', id)
+  if (!error) { toast('Marked as read.'); loadMessages() }
+  else toast(`Error: ${error.message}`, 'error')
+}
+
+async function deleteMessage(id) {
+  if (!supabaseClient) return
+  const { error } = await supabaseClient.from('contacts').delete().eq('id', id)
+  if (!error) { toast('Message deleted.'); loadMessages() }
+  else toast(`Error: ${error.message}`, 'error')
+}
+
+function openDeleteMessageModal(id, name) {
+  deleteTargetMsg = id
+  document.getElementById('delete-msg-name').textContent = name
+  document.getElementById('delete-message-modal').style.display = 'flex'
+}
+
+function closeDeleteMessageModal(e) {
+  if (e && e.target !== document.getElementById('delete-message-modal')) return
+  document.getElementById('delete-message-modal').style.display = 'none'
+  deleteTargetMsg = null
+}
+
+async function confirmDeleteMessage() {
+  if (!deleteTargetMsg || !supabaseClient) return
+  const btn = document.getElementById('confirm-delete-msg-btn')
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div> Deleting…'
+
+  const { error } = await supabaseClient.from('contacts').delete().eq('id', deleteTargetMsg)
+  if (error) {
+    toast(`Error: ${error.message}`, 'error')
+    btn.disabled = false
+    btn.innerHTML = `<i class="fas fa-trash-alt" style="font-size:14px;margin-right:6px"></i> Delete`
+  } else {
+    toast('Message deleted.', 'success')
+    closeDeleteMessageModal()
+    loadMessages()
+  }
+}
+
+function openMessageModal(message) {
+  currentMessage = message
+  document.getElementById('msg-from').textContent = `From: ${escHtml(message.name)}`
+  document.getElementById('msg-sender-name').textContent = escHtml(message.name)
+  const emailEl = document.getElementById('msg-sender-email')
+  emailEl.textContent = escHtml(message.email)
+  emailEl.href = `mailto:${message.email}`
+  document.getElementById('msg-subject').textContent = message.subject || '—'
+  document.getElementById('msg-date').textContent = formatDate(message.created_at)
+  document.getElementById('msg-full-date').textContent = new Date(message.created_at).toLocaleString('en-US', { 
+    weekday: 'short', 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+  document.getElementById('msg-content').textContent = message.message
+  document.getElementById('message-modal').style.display = 'flex'
+
+  // Mark as read if unread
+  if (!message.is_read && supabaseClient) {
+    supabaseClient.from('contacts').update({ is_read: true }).eq('id', message.id).then(() => {
+      loadMessages()
+    })
+  }
+}
+
+function closeMessageModal(e) {
+  if (e && e.target !== document.getElementById('message-modal')) return
+  document.getElementById('message-modal').style.display = 'none'
+  currentMessage = null
+}
+
+function openDeleteMessageFromViewer() {
+  if (currentMessage) {
+    closeMessageModal()
+    openDeleteMessageModal(currentMessage.id, currentMessage.name)
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadDashboard() {
+  if (!supabaseClient) {
+    document.getElementById('stat-projects').textContent = '—'
+    document.getElementById('stat-messages').textContent = '—'
+    document.getElementById('stat-unread').textContent   = '—'
+    return
+  }
+
+  const [{ data: projects }, { data: contacts }] = await Promise.all([
+    supabaseClient.from('projects').select('id,title,short_description,category,year,images,tech_stack,created_at').order('created_at', { ascending: false }).limit(6),
+    supabaseClient.from('contacts').select('id,is_read'),
+  ])
+
+  allProjects = projects || []
+  allMessages = contacts || []
+
+  document.getElementById('stat-projects').textContent = allProjects.length
+  document.getElementById('stat-messages').textContent = allMessages.length
+  const unread = allMessages.filter(m => !m.is_read).length
+  document.getElementById('stat-unread').textContent   = unread
+
+  const badge = document.getElementById('unread-badge')
+  if (unread > 0) { badge.style.display = 'inline'; badge.textContent = unread }
+  else badge.style.display = 'none'
+
+  // Recent projects mini-table
+  const el = document.getElementById('dashboard-recent')
+  if (!allProjects.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="fas fa-briefcase"></i></div>
+        <h3 class="empty-state-title">No projects yet</h3>
+        <p class="empty-state-desc">Your latest work will appear here once you add a project.</p>
+      </div>`
+    return
+  }
+  el.innerHTML = `
+    <table><thead><tr><th>Title</th><th>Category</th><th>Year</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>${allProjects.slice(0,6).map(p => `
+      <tr>
+        <td class="td-name">${escHtml(p.title)}</td>
+        <td><span class="chip category">${escHtml(p.category||'—')}</span></td>
+        <td class="td-date">${p.year||'—'}</td>
+        <td style="text-align:right">
+          <button class="btn btn-ghost btn-sm" onclick='editProject(${JSON.stringify(p).replace(/'/g,"&apos;")})'>
+            <i class="fas fa-pencil-alt" style="font-size:14px;margin-right:4px"></i> Edit
+          </button>
+        </td>
+      </tr>`).join('')}
+    </tbody></table>`
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SQL COPY
+// ═══════════════════════════════════════════════════════════════════════════
+function copySQL() {
+  const code = document.getElementById('sql-code').innerText.replace(/Click to copy/g,'').trim()
+  navigator.clipboard.writeText(code).then(() => {
+    document.getElementById('sql-copy-hint').textContent = '✓ Copied!'
+    setTimeout(() => document.getElementById('sql-copy-hint').textContent = 'Click to copy', 2000)
+  })
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════════════════════
+function toast(msg, type = 'default') {
+  const icons = {
+    success: `<i class="fas fa-check-circle" style="color:var(--success); font-size:20px;"></i>`,
+    error:   `<i class="fas fa-times-circle" style="color:var(--danger); font-size:20px;"></i>`,
+    default: `<i class="fas fa-info-circle" style="color:var(--accent); font-size:20px;"></i>`,
+  }
+  const el = document.createElement('div')
+  el.className = `toast ${type}`
+  el.innerHTML = `${icons[type] || icons.default}<span>${msg}</span>`
+  document.getElementById('toast-container').appendChild(el)
+  setTimeout(() => {
+    el.style.animation = 'toastOut 0.2s ease forwards'
+    setTimeout(() => el.remove(), 220)
+  }, 3000)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+function escHtml(str) {
+  if (!str) return ''
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+}
+
+function formatDate(iso) {
+  if (!iso) return '—'
+  return new Intl.DateTimeFormat('en-US', { year:'numeric', month:'short', day:'numeric' }).format(new Date(iso))
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initSupabase()
+  checkEnvStatus()
+  loadDashboard()
+
+  // Year default
+  const yearInput = document.getElementById('f-year')
+  if (yearInput) yearInput.value = new Date().getFullYear()
+})
+</script>
+</body>
+</html>
